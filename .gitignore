@@ -2,5 +2,6 @@
 *.pyc
 *.egg-info
 *.swp
+*.*~
 tags
 library_management/docs/current

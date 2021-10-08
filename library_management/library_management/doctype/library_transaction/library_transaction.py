@@ -6,11 +6,13 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 
+
 class LibraryTransaction(Document):
         def before_submit(self):
                 if self.type == "Issue":
                         self.validate_issue()
-
+                        self.validate_maximum_limit()
+                        
                         article = frappe.get_doc("Article", self.article)
                         article.status = "Issued"
                         article.save()
@@ -21,6 +23,16 @@ class LibraryTransaction(Document):
                         article = frappe.get_doc("Article", self.article)
                         article.status = "Available"
                         article.save()
+
+        def validate_maximum_limit(self):
+                max_articles = frappe.db.get_single_value("Library Settings", "max_articles")
+                count = frappe.db.count(
+                        "Library Transaction",
+                        {"library_member":  self.library_member, "type": "Issue", "docstatus": 1},
+                )
+
+                if count >= max_articles:
+                        frappe.throw("Maximum limit reached for issuing articles")
 
         def validate_issue(self):
                 self.validate_membership()
@@ -47,5 +59,3 @@ class LibraryTransaction(Document):
 
                 if not validate_membership:
                         frappe.throw("The member does not have a valid membership")
-                
-                
